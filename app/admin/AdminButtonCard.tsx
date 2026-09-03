@@ -37,7 +37,7 @@ export default function AdminButtonCard({
             disabled={isFirst || isPending}
             onClick={() => startTransition(() => moveButton(button.id, "up"))}
             className="rounded px-1 text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
-            aria-label="Переместить вверх"
+            aria-label="Move up"
           >
             ▲
           </button>
@@ -46,7 +46,7 @@ export default function AdminButtonCard({
             disabled={isLast || isPending}
             onClick={() => startTransition(() => moveButton(button.id, "down"))}
             className="rounded px-1 text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
-            aria-label="Переместить вниз"
+            aria-label="Move down"
           >
             ▼
           </button>
@@ -66,13 +66,13 @@ export default function AdminButtonCard({
         <button
           type="button"
           onClick={() => {
-            if (confirm(`Удалить кнопку "${button.title}" вместе со всеми ссылками?`)) {
+            if (confirm(`Delete button "${button.title}" along with all its links?`)) {
               startTransition(() => deleteButton(button.id));
             }
           }}
           className="rounded-lg px-2 py-2 text-sm text-red-500 hover:bg-red-50"
         >
-          Удалить
+          Delete
         </button>
       </div>
 
@@ -84,7 +84,7 @@ export default function AdminButtonCard({
             startTransition(() => updateButtonIcon(button.id, iconUrl));
           }
         }}
-        placeholder="URL иконки (необязательно)"
+        placeholder="Icon URL (optional)"
         className="mb-3 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-600 focus:border-neutral-500 focus:outline-none"
       />
 
@@ -105,7 +105,7 @@ export default function AdminButtonCard({
           <input
             value={newLabel}
             onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="Название ссылки"
+            placeholder="Link label"
             className="flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:border-neutral-500 focus:outline-none"
           />
           <input
@@ -126,7 +126,7 @@ export default function AdminButtonCard({
             }}
             className="rounded-lg bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-700 disabled:opacity-40"
           >
-            Добавить ссылку
+            Add Link
           </button>
         </div>
       </div>
@@ -167,7 +167,7 @@ function LinkRow({
           disabled={isFirst || isPending}
           onClick={() => startTransition(() => moveLink(linkId, buttonId, "up"))}
           className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
-          aria-label="Переместить вверх"
+          aria-label="Move up"
         >
           ▲
         </button>
@@ -176,7 +176,7 @@ function LinkRow({
           disabled={isLast || isPending}
           onClick={() => startTransition(() => moveLink(linkId, buttonId, "down"))}
           className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
-          aria-label="Переместить вниз"
+          aria-label="Move down"
         >
           ▼
         </button>
@@ -186,7 +186,7 @@ function LinkRow({
         value={label}
         onChange={(e) => setLabel(e.target.value)}
         onBlur={commitIfChanged}
-        placeholder="Название"
+        placeholder="Label"
         className="flex-1 rounded-md border border-neutral-200 px-2 py-1.5 text-sm focus:border-neutral-500 focus:outline-none"
       />
       <input
@@ -201,7 +201,7 @@ function LinkRow({
         onClick={() => startTransition(() => deleteLink(linkId))}
         className="rounded-md px-2 py-1.5 text-sm text-red-500 hover:bg-red-50"
       >
-        Удалить
+        Delete
       </button>
     </div>
   );

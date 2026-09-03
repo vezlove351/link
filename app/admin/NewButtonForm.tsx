@@ -26,7 +26,7 @@ export default function NewButtonForm() {
       <input
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Название новой кнопки"
+        placeholder="New button title"
         className="flex-1 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-base focus:border-neutral-500 focus:outline-none"
       />
       <button
@@ -34,7 +34,7 @@ export default function NewButtonForm() {
         disabled={!title.trim() || isPending}
         className="rounded-lg bg-neutral-900 px-4 py-2.5 text-base font-medium text-white hover:bg-neutral-700 disabled:opacity-40"
       >
-        Добавить кнопку
+        Add Button
       </button>
     </form>
   );

@@ -30,10 +30,10 @@ export default async function AdminPage() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-10">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Админка</h1>
+        <h1 className="text-xl font-semibold">Admin</h1>
         <form action="/api/admin/logout" method="POST">
           <button type="submit" className="text-sm text-neutral-500 hover:text-neutral-900">
-            Выйти
+            Log Out
           </button>
         </form>
       </div>
@@ -41,7 +41,7 @@ export default async function AdminPage() {
       <NewButtonForm />
 
       <div className="flex flex-col gap-4">
-        {buttons.length === 0 && <p className="text-neutral-400">Кнопок пока нет</p>}
+        {buttons.length === 0 && <p className="text-neutral-400">No buttons yet</p>}
         {buttons.map((button, idx) => (
           <AdminButtonCard
             key={button.id}

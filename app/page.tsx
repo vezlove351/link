@@ -37,12 +37,12 @@ export default async function HomePage() {
     <main className="mx-auto flex min-h-screen w-full max-w-md flex-col items-center px-4 py-10">
       <div className="mb-8 flex flex-col items-center gap-2">
         <div className="h-20 w-20 rounded-full bg-neutral-300" />
-        <h1 className="text-xl font-semibold">Мои ссылки</h1>
+        <h1 className="text-xl font-semibold">My Links</h1>
       </div>
 
       <div className="flex w-full flex-col gap-3">
         {buttons.length === 0 && (
-          <p className="text-center text-neutral-400">Ссылок пока нет</p>
+          <p className="text-center text-neutral-400">No links yet</p>
         )}
         {buttons.map((button) => (
           <LinkButton key={button.id} button={button} />

@@ -13,12 +13,12 @@ export default function AdminLoginPage({
         method="POST"
         className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-sm"
       >
-        <h1 className="mb-4 text-lg font-semibold text-neutral-900">Вход в админку</h1>
+        <h1 className="mb-4 text-lg font-semibold text-neutral-900">Admin Login</h1>
 
         <input type="hidden" name="next" value={next} />
 
         <label className="mb-1 block text-sm font-medium text-neutral-700" htmlFor="password">
-          Пароль
+          Password
         </label>
         <input
           id="password"
@@ -30,14 +30,14 @@ export default function AdminLoginPage({
         />
 
         {hasError && (
-          <p className="mb-3 text-sm text-red-600">Неверный пароль. Попробуйте ещё раз.</p>
+          <p className="mb-3 text-sm text-red-600">Incorrect password. Please try again.</p>
         )}
 
         <button
           type="submit"
           className="w-full rounded-lg bg-neutral-900 py-2.5 text-base font-medium text-white transition hover:bg-neutral-700"
         >
-          Войти
+          Log In
         </button>
       </form>
     </div>
