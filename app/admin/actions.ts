@@ -82,6 +82,61 @@ export async function updateGroupIcon(groupId: string, slug: string, iconUrl: st
   revalidateGroup(slug);
 }
 
+const ALLOWED_ICON_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+]);
+const MAX_ICON_BYTES = 2 * 1024 * 1024;
+
+export async function uploadGroupIcon(
+  groupId: string,
+  slug: string,
+  formData: FormData
+): Promise<{ ok: true } | { error: string }> {
+  const file = formData.get("file");
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "No file selected." };
+  }
+  if (!ALLOWED_ICON_TYPES.has(file.type)) {
+    return { error: "Unsupported file type. Use PNG, JPEG, WebP, GIF, or SVG." };
+  }
+  if (file.size > MAX_ICON_BYTES) {
+    return { error: "File is too large (max 2 MB)." };
+  }
+
+  const admin = getSupabaseAdmin();
+  const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+  const path = `${groupId}-${Date.now()}.${extension}`;
+
+  const { error: uploadError } = await admin.storage
+    .from("group-icons")
+    .upload(path, file, { contentType: file.type, upsert: true });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const {
+    data: { publicUrl },
+  } = admin.storage.from("group-icons").getPublicUrl(path);
+
+  const { error } = await admin
+    .from("groups")
+    .update({ icon_url: publicUrl })
+    .eq("id", groupId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateGroup(slug);
+  return { ok: true };
+}
+
 export async function moveGroup(groupId: string, direction: "up" | "down") {
   const admin = getSupabaseAdmin();
 

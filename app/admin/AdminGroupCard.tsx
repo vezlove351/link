@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import type { GroupWithLinks } from "@/lib/types";
 import {
   addGroupLink,
@@ -9,8 +9,8 @@ import {
   moveGroup,
   moveGroupLink,
   renameGroup,
-  updateGroupIcon,
   updateGroupLink,
+  uploadGroupIcon,
 } from "./actions";
 
 export default function AdminGroupCard({
@@ -24,10 +24,11 @@ export default function AdminGroupCard({
 }) {
   const [isPending, startTransition] = useTransition();
   const [title, setTitle] = useState(group.title);
-  const [iconUrl, setIconUrl] = useState(group.icon_url ?? "");
   const [newLabel, setNewLabel] = useState("");
   const [newUrl, setNewUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [iconError, setIconError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm">
@@ -100,17 +101,48 @@ export default function AdminGroupCard({
         </button>
       </div>
 
-      <input
-        value={iconUrl}
-        onChange={(e) => setIconUrl(e.target.value)}
-        onBlur={() => {
-          if (iconUrl !== (group.icon_url ?? "")) {
-            startTransition(() => updateGroupIcon(group.id, group.slug, iconUrl));
-          }
-        }}
-        placeholder="Icon URL (optional)"
-        className="mb-3 w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-600 focus:border-neutral-500 focus:outline-none"
-      />
+      <div className="mb-3 flex items-center gap-3">
+        {group.icon_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={group.icon_url}
+            alt=""
+            className="h-12 w-12 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="h-12 w-12 shrink-0 rounded-full bg-neutral-200" />
+        )}
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setIconError(null);
+            const formData = new FormData();
+            formData.set("file", file);
+            startTransition(async () => {
+              const result = await uploadGroupIcon(group.id, group.slug, formData);
+              if ("error" in result) {
+                setIconError(result.error);
+              }
+              if (fileInputRef.current) fileInputRef.current.value = "";
+            });
+          }}
+        />
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={() => fileInputRef.current?.click()}
+          className="rounded-lg border border-neutral-200 px-3 py-2 text-sm text-neutral-600 hover:bg-neutral-50 disabled:opacity-40"
+        >
+          {group.icon_url ? "Change image" : "Upload image"}
+        </button>
+        {iconError && <p className="text-sm text-red-600">{iconError}</p>}
+      </div>
 
       <div className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
         {group.links.map((link, idx) => (
