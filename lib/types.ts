@@ -23,14 +23,38 @@ export type Database = {
     Tables: {
       buttons: {
         Row: ButtonItem;
-        Insert: Partial<ButtonItem> & { title: string };
-        Update: Partial<ButtonItem>;
+        Insert: {
+          id?: string;
+          title: string;
+          icon_url?: string | null;
+          position?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          icon_url?: string | null;
+          position?: number;
+          created_at?: string;
+        };
         Relationships: [];
       };
       links: {
         Row: Link;
-        Insert: Partial<Link> & { button_id: string; label: string; url: string };
-        Update: Partial<Link>;
+        Insert: {
+          id?: string;
+          button_id: string;
+          label: string;
+          url: string;
+          position?: number;
+        };
+        Update: {
+          id?: string;
+          button_id?: string;
+          label?: string;
+          url?: string;
+          position?: number;
+        };
         Relationships: [];
       };
     };

@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import type { ButtonWithLinks } from "@/lib/types";
 import LinkButton from "@/components/LinkButton";
 
-export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 async function getButtonsWithLinks(): Promise<ButtonWithLinks[]> {
   const { data: buttons, error: buttonsError } = await supabase

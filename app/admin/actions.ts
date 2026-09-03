@@ -16,7 +16,7 @@ export async function createButton(formData: FormData) {
 
   const { data: existing } = await admin
     .from("buttons")
-    .select("position")
+    .select("*")
     .order("position", { ascending: false })
     .limit(1);
 
@@ -90,7 +90,7 @@ export async function addLink(buttonId: string, label: string, url: string) {
 
   const { data: existing } = await admin
     .from("links")
-    .select("position")
+    .select("*")
     .eq("button_id", buttonId)
     .order("position", { ascending: false })
     .limit(1);
