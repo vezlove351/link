@@ -1,41 +1,42 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { ButtonWithLinks } from "@/lib/types";
+import type { GroupWithLinks } from "@/lib/types";
 import {
-  addLink,
-  deleteButton,
-  deleteLink,
-  moveButton,
-  moveLink,
-  renameButton,
-  updateButtonIcon,
-  updateLink,
+  addGroupLink,
+  deleteGroup,
+  deleteGroupLink,
+  moveGroup,
+  moveGroupLink,
+  renameGroup,
+  updateGroupIcon,
+  updateGroupLink,
 } from "./actions";
 
-export default function AdminButtonCard({
-  button,
+export default function AdminGroupCard({
+  group,
   isFirst,
   isLast,
 }: {
-  button: ButtonWithLinks;
+  group: GroupWithLinks;
   isFirst: boolean;
   isLast: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
-  const [title, setTitle] = useState(button.title);
-  const [iconUrl, setIconUrl] = useState(button.icon_url ?? "");
+  const [title, setTitle] = useState(group.title);
+  const [iconUrl, setIconUrl] = useState(group.icon_url ?? "");
   const [newLabel, setNewLabel] = useState("");
   const [newUrl, setNewUrl] = useState("");
+  const [copied, setCopied] = useState(false);
 
   return (
     <div className="rounded-2xl bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-center gap-2">
+      <div className="mb-1 flex items-center gap-2">
         <div className="flex flex-col">
           <button
             type="button"
             disabled={isFirst || isPending}
-            onClick={() => startTransition(() => moveButton(button.id, "up"))}
+            onClick={() => startTransition(() => moveGroup(group.id, "up"))}
             className="rounded px-1 text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
             aria-label="Move up"
           >
@@ -44,7 +45,7 @@ export default function AdminButtonCard({
           <button
             type="button"
             disabled={isLast || isPending}
-            onClick={() => startTransition(() => moveButton(button.id, "down"))}
+            onClick={() => startTransition(() => moveGroup(group.id, "down"))}
             className="rounded px-1 text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
             aria-label="Move down"
           >
@@ -56,8 +57,8 @@ export default function AdminButtonCard({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => {
-            if (title.trim() && title !== button.title) {
-              startTransition(() => renameButton(button.id, title));
+            if (title.trim() && title !== group.title) {
+              startTransition(() => renameGroup(group.id, group.slug, title));
             }
           }}
           className="flex-1 rounded-lg border border-neutral-200 px-3 py-2 text-base font-medium focus:border-neutral-500 focus:outline-none"
@@ -66,8 +67,8 @@ export default function AdminButtonCard({
         <button
           type="button"
           onClick={() => {
-            if (confirm(`Delete button "${button.title}" along with all its links?`)) {
-              startTransition(() => deleteButton(button.id));
+            if (confirm(`Delete group "${group.title}" along with all its links?`)) {
+              startTransition(() => deleteGroup(group.id, group.slug));
             }
           }}
           className="rounded-lg px-2 py-2 text-sm text-red-500 hover:bg-red-50"
@@ -76,12 +77,35 @@ export default function AdminButtonCard({
         </button>
       </div>
 
+      <div className="mb-3 flex items-center gap-2 pl-7 text-sm text-neutral-500">
+        <a
+          href={`/${group.slug}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-neutral-900 hover:underline"
+        >
+          /{group.slug}
+        </a>
+        <button
+          type="button"
+          onClick={() => {
+            const url = `${window.location.origin}/${group.slug}`;
+            navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+          className="text-neutral-400 hover:text-neutral-900"
+        >
+          {copied ? "Copied!" : "Copy link"}
+        </button>
+      </div>
+
       <input
         value={iconUrl}
         onChange={(e) => setIconUrl(e.target.value)}
         onBlur={() => {
-          if (iconUrl !== (button.icon_url ?? "")) {
-            startTransition(() => updateButtonIcon(button.id, iconUrl));
+          if (iconUrl !== (group.icon_url ?? "")) {
+            startTransition(() => updateGroupIcon(group.id, group.slug, iconUrl));
           }
         }}
         placeholder="Icon URL (optional)"
@@ -89,15 +113,16 @@ export default function AdminButtonCard({
       />
 
       <div className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
-        {button.links.map((link, idx) => (
+        {group.links.map((link, idx) => (
           <LinkRow
             key={link.id}
             linkId={link.id}
-            buttonId={button.id}
+            groupId={group.id}
+            slug={group.slug}
             initialLabel={link.label}
             initialUrl={link.url}
             isFirst={idx === 0}
-            isLast={idx === button.links.length - 1}
+            isLast={idx === group.links.length - 1}
           />
         ))}
 
@@ -119,7 +144,7 @@ export default function AdminButtonCard({
             disabled={!newLabel.trim() || !newUrl.trim() || isPending}
             onClick={() => {
               startTransition(async () => {
-                await addLink(button.id, newLabel, newUrl);
+                await addGroupLink(group.id, group.slug, newLabel, newUrl);
                 setNewLabel("");
                 setNewUrl("");
               });
@@ -136,14 +161,16 @@ export default function AdminButtonCard({
 
 function LinkRow({
   linkId,
-  buttonId,
+  groupId,
+  slug,
   initialLabel,
   initialUrl,
   isFirst,
   isLast,
 }: {
   linkId: string;
-  buttonId: string;
+  groupId: string;
+  slug: string;
   initialLabel: string;
   initialUrl: string;
   isFirst: boolean;
@@ -155,7 +182,7 @@ function LinkRow({
 
   function commitIfChanged() {
     if (label.trim() && url.trim() && (label !== initialLabel || url !== initialUrl)) {
-      startTransition(() => updateLink(linkId, label, url));
+      startTransition(() => updateGroupLink(linkId, slug, label, url));
     }
   }
 
@@ -165,7 +192,7 @@ function LinkRow({
         <button
           type="button"
           disabled={isFirst || isPending}
-          onClick={() => startTransition(() => moveLink(linkId, buttonId, "up"))}
+          onClick={() => startTransition(() => moveGroupLink(linkId, groupId, slug, "up"))}
           className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
           aria-label="Move up"
         >
@@ -174,7 +201,7 @@ function LinkRow({
         <button
           type="button"
           disabled={isLast || isPending}
-          onClick={() => startTransition(() => moveLink(linkId, buttonId, "down"))}
+          onClick={() => startTransition(() => moveGroupLink(linkId, groupId, slug, "down"))}
           className="px-1 text-xs text-neutral-400 hover:text-neutral-900 disabled:opacity-20"
           aria-label="Move down"
         >
@@ -198,7 +225,7 @@ function LinkRow({
       />
       <button
         type="button"
-        onClick={() => startTransition(() => deleteLink(linkId))}
+        onClick={() => startTransition(() => deleteGroupLink(linkId, slug))}
         className="rounded-md px-2 py-1.5 text-sm text-red-500 hover:bg-red-50"
       >
         Delete

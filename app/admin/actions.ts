@@ -2,86 +2,119 @@
 
 import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { RESERVED_SLUGS, SLUG_REGEX } from "@/lib/reserved-slugs";
 
-function revalidateAll() {
-  revalidatePath("/");
+function revalidateAdmin() {
   revalidatePath("/admin");
 }
 
-export async function createButton(formData: FormData) {
+function revalidateGroup(slug: string) {
+  revalidatePath("/admin");
+  revalidatePath(`/${slug}`);
+}
+
+export async function createGroup(
+  formData: FormData
+): Promise<{ ok: true } | { error: string }> {
   const title = String(formData.get("title") ?? "").trim();
-  if (!title) return;
+  const rawSlug = String(formData.get("slug") ?? "").trim().toLowerCase();
+
+  if (!title) {
+    return { error: "Title is required." };
+  }
+
+  if (!SLUG_REGEX.test(rawSlug) || rawSlug.length > 64) {
+    return { error: "Slug must be lowercase letters, numbers, and hyphens only." };
+  }
+
+  if (RESERVED_SLUGS.has(rawSlug)) {
+    return { error: "That slug is reserved and can't be used." };
+  }
 
   const admin = getSupabaseAdmin();
 
   const { data: existing } = await admin
-    .from("buttons")
+    .from("groups")
     .select("*")
     .order("position", { ascending: false })
     .limit(1);
 
   const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
-  const { error } = await admin.from("buttons").insert({ title, position: nextPosition });
-  if (error) throw new Error(error.message);
+  const { error } = await admin
+    .from("groups")
+    .insert({ title, slug: rawSlug, position: nextPosition });
 
-  revalidateAll();
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "That slug is already taken." };
+    }
+    return { error: error.message };
+  }
+
+  revalidateAdmin();
+  return { ok: true };
 }
 
-export async function deleteButton(buttonId: string) {
+export async function deleteGroup(groupId: string, slug: string) {
   const admin = getSupabaseAdmin();
-  const { error } = await admin.from("buttons").delete().eq("id", buttonId);
+  const { error } = await admin.from("groups").delete().eq("id", groupId);
   if (error) throw new Error(error.message);
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function renameButton(buttonId: string, title: string) {
+export async function renameGroup(groupId: string, slug: string, title: string) {
   const trimmed = title.trim();
   if (!trimmed) return;
   const admin = getSupabaseAdmin();
-  const { error } = await admin.from("buttons").update({ title: trimmed }).eq("id", buttonId);
+  const { error } = await admin.from("groups").update({ title: trimmed }).eq("id", groupId);
   if (error) throw new Error(error.message);
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function updateButtonIcon(buttonId: string, iconUrl: string) {
+export async function updateGroupIcon(groupId: string, slug: string, iconUrl: string) {
   const admin = getSupabaseAdmin();
   const { error } = await admin
-    .from("buttons")
+    .from("groups")
     .update({ icon_url: iconUrl.trim() || null })
-    .eq("id", buttonId);
+    .eq("id", groupId);
   if (error) throw new Error(error.message);
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function moveButton(buttonId: string, direction: "up" | "down") {
+export async function moveGroup(groupId: string, direction: "up" | "down") {
   const admin = getSupabaseAdmin();
 
-  const { data: buttons, error } = await admin
-    .from("buttons")
+  const { data: groups, error } = await admin
+    .from("groups")
     .select("id, position")
     .order("position", { ascending: true });
 
-  if (error || !buttons) throw new Error(error?.message ?? "Failed to load buttons");
+  if (error || !groups) throw new Error(error?.message ?? "Failed to load groups");
 
-  const index = buttons.findIndex((b) => b.id === buttonId);
+  const index = groups.findIndex((g) => g.id === groupId);
   if (index === -1) return;
 
   const swapIndex = direction === "up" ? index - 1 : index + 1;
-  if (swapIndex < 0 || swapIndex >= buttons.length) return;
+  if (swapIndex < 0 || swapIndex >= groups.length) return;
 
-  const current = buttons[index];
-  const swapWith = buttons[swapIndex];
+  const current = groups[index];
+  const swapWith = groups[swapIndex];
 
   await Promise.all([
-    admin.from("buttons").update({ position: swapWith.position }).eq("id", current.id),
-    admin.from("buttons").update({ position: current.position }).eq("id", swapWith.id),
+    admin.from("groups").update({ position: swapWith.position }).eq("id", current.id),
+    admin.from("groups").update({ position: current.position }).eq("id", swapWith.id),
   ]);
 
-  revalidateAll();
+  revalidateAdmin();
 }
 
-export async function addLink(buttonId: string, label: string, url: string) {
+export async function addGroupLink(
+  groupId: string,
+  slug: string,
+  label: string,
+  url: string
+) {
   const trimmedLabel = label.trim();
   const trimmedUrl = url.trim();
   if (!trimmedLabel || !trimmedUrl) return;
@@ -89,51 +122,61 @@ export async function addLink(buttonId: string, label: string, url: string) {
   const admin = getSupabaseAdmin();
 
   const { data: existing } = await admin
-    .from("links")
+    .from("group_links")
     .select("*")
-    .eq("button_id", buttonId)
+    .eq("group_id", groupId)
     .order("position", { ascending: false })
     .limit(1);
 
   const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
 
   const { error } = await admin
-    .from("links")
-    .insert({ button_id: buttonId, label: trimmedLabel, url: trimmedUrl, position: nextPosition });
+    .from("group_links")
+    .insert({ group_id: groupId, label: trimmedLabel, url: trimmedUrl, position: nextPosition });
   if (error) throw new Error(error.message);
 
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function updateLink(linkId: string, label: string, url: string) {
+export async function updateGroupLink(
+  linkId: string,
+  slug: string,
+  label: string,
+  url: string
+) {
   const trimmedLabel = label.trim();
   const trimmedUrl = url.trim();
   if (!trimmedLabel || !trimmedUrl) return;
 
   const admin = getSupabaseAdmin();
   const { error } = await admin
-    .from("links")
+    .from("group_links")
     .update({ label: trimmedLabel, url: trimmedUrl })
     .eq("id", linkId);
   if (error) throw new Error(error.message);
 
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function deleteLink(linkId: string) {
+export async function deleteGroupLink(linkId: string, slug: string) {
   const admin = getSupabaseAdmin();
-  const { error } = await admin.from("links").delete().eq("id", linkId);
+  const { error } = await admin.from("group_links").delete().eq("id", linkId);
   if (error) throw new Error(error.message);
-  revalidateAll();
+  revalidateGroup(slug);
 }
 
-export async function moveLink(linkId: string, buttonId: string, direction: "up" | "down") {
+export async function moveGroupLink(
+  linkId: string,
+  groupId: string,
+  slug: string,
+  direction: "up" | "down"
+) {
   const admin = getSupabaseAdmin();
 
   const { data: links, error } = await admin
-    .from("links")
+    .from("group_links")
     .select("id, position")
-    .eq("button_id", buttonId)
+    .eq("group_id", groupId)
     .order("position", { ascending: true });
 
   if (error || !links) throw new Error(error?.message ?? "Failed to load links");
@@ -148,9 +191,9 @@ export async function moveLink(linkId: string, buttonId: string, direction: "up"
   const swapWith = links[swapIndex];
 
   await Promise.all([
-    admin.from("links").update({ position: swapWith.position }).eq("id", current.id),
-    admin.from("links").update({ position: current.position }).eq("id", swapWith.id),
+    admin.from("group_links").update({ position: swapWith.position }).eq("id", current.id),
+    admin.from("group_links").update({ position: current.position }).eq("id", swapWith.id),
   ]);
 
-  revalidateAll();
+  revalidateGroup(slug);
 }

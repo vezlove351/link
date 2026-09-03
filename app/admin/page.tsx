@@ -1,31 +1,31 @@
 import { supabase } from "@/lib/supabase";
-import type { ButtonWithLinks } from "@/lib/types";
-import AdminButtonCard from "./AdminButtonCard";
-import NewButtonForm from "./NewButtonForm";
+import type { GroupWithLinks } from "@/lib/types";
+import AdminGroupCard from "./AdminGroupCard";
+import NewGroupForm from "./NewGroupForm";
 
 export const dynamic = "force-dynamic";
 
-async function getButtonsWithLinks(): Promise<ButtonWithLinks[]> {
-  const { data: buttons, error: buttonsError } = await supabase
-    .from("buttons")
+async function getGroupsWithLinks(): Promise<GroupWithLinks[]> {
+  const { data: groups, error: groupsError } = await supabase
+    .from("groups")
     .select("*")
     .order("position", { ascending: true });
 
-  if (buttonsError || !buttons) return [];
+  if (groupsError || !groups) return [];
 
   const { data: links } = await supabase
-    .from("links")
+    .from("group_links")
     .select("*")
     .order("position", { ascending: true });
 
-  return buttons.map((button) => ({
-    ...button,
-    links: (links ?? []).filter((link) => link.button_id === button.id),
+  return groups.map((group) => ({
+    ...group,
+    links: (links ?? []).filter((link) => link.group_id === group.id),
   }));
 }
 
 export default async function AdminPage() {
-  const buttons = await getButtonsWithLinks();
+  const groups = await getGroupsWithLinks();
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-2xl px-4 py-10">
@@ -38,16 +38,16 @@ export default async function AdminPage() {
         </form>
       </div>
 
-      <NewButtonForm />
+      <NewGroupForm />
 
       <div className="flex flex-col gap-4">
-        {buttons.length === 0 && <p className="text-neutral-400">No buttons yet</p>}
-        {buttons.map((button, idx) => (
-          <AdminButtonCard
-            key={button.id}
-            button={button}
+        {groups.length === 0 && <p className="text-neutral-400">No groups yet</p>}
+        {groups.map((group, idx) => (
+          <AdminGroupCard
+            key={group.id}
+            group={group}
             isFirst={idx === 0}
-            isLast={idx === buttons.length - 1}
+            isLast={idx === groups.length - 1}
           />
         ))}
       </div>

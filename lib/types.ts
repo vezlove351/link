@@ -1,30 +1,32 @@
-export type Link = {
+export type GroupLink = {
   id: string;
-  button_id: string;
+  group_id: string;
   label: string;
   url: string;
   position: number;
 };
 
-export type ButtonItem = {
+export type Group = {
   id: string;
+  slug: string;
   title: string;
   icon_url: string | null;
   position: number;
   created_at: string;
 };
 
-export type ButtonWithLinks = ButtonItem & {
-  links: Link[];
+export type GroupWithLinks = Group & {
+  links: GroupLink[];
 };
 
 export type Database = {
   public: {
     Tables: {
-      buttons: {
-        Row: ButtonItem;
+      groups: {
+        Row: Group;
         Insert: {
           id?: string;
+          slug: string;
           title: string;
           icon_url?: string | null;
           position?: number;
@@ -32,6 +34,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          slug?: string;
           title?: string;
           icon_url?: string | null;
           position?: number;
@@ -39,18 +42,18 @@ export type Database = {
         };
         Relationships: [];
       };
-      links: {
-        Row: Link;
+      group_links: {
+        Row: GroupLink;
         Insert: {
           id?: string;
-          button_id: string;
+          group_id: string;
           label: string;
           url: string;
           position?: number;
         };
         Update: {
           id?: string;
-          button_id?: string;
+          group_id?: string;
           label?: string;
           url?: string;
           position?: number;
